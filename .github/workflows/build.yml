@@ -1,0 +1,131 @@
+##
+# Continuous integration for Tether.
+#
+# Two jobs:
+#   test  — runs the unit-test bundle (TetherTests) on the native runner.
+#   build — one Release build per CPU architecture, as separate matrix legs:
+#           arm64 (AppleSilicon) and x86_64 (Intel). The Intel build is
+#           cross-compiled from the Apple Silicon runner with ARCHS=x86_64,
+#           exactly how scripts/release.sh produces both disk images on one
+#           machine.
+#
+# Artifacts are ad-hoc signed (CODE_SIGN_IDENTITY="-"): the runners hold no
+# "Tether Self-Signed" certificate, and the in-app updater refuses to install
+# anything signed differently (docs/signing.md). So these DMGs are for
+# testing only — official releases still come from scripts/release.sh.
+##
+
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: xcodebuild -version && sw_vers
+
+      # Ad-hoc signing: CI has no signing identities, and the test host
+      # (Tether.app) must be signed to launch. Only TetherTests runs; the
+      # UI-test target is empty boilerplate and needs a windowserver session.
+      - name: Run unit tests
+        run: |
+          xcodebuild test \
+            -project Tether.xcodeproj \
+            -scheme Tether \
+            -destination "platform=macOS" \
+            -only-testing:TetherTests \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY=- \
+            DEVELOPMENT_TEAM="" \
+            | xcbeautify --renderer github
+
+  build:
+    name: Release (${{ matrix.label }})
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            label: AppleSilicon
+          - arch: x86_64
+            label: Intel
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: xcodebuild -version && sw_vers
+
+      - name: Read marketing version
+        run: |
+          VERSION=$(xcodebuild -project Tether.xcodeproj -target Tether -configuration Release -showBuildSettings 2>/dev/null \
+            | awk -F' = ' '/ MARKETING_VERSION = / { print $2; exit }')
+          [[ -n "$VERSION" ]] || { echo "Could not read MARKETING_VERSION" >&2; exit 1; }
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      # Mirrors scripts/release.sh: per-arch build, stripped, no coverage
+      # counters, ad-hoc signed instead of "Tether Self-Signed" (not in CI).
+      - name: Build Tether (${{ matrix.arch }})
+        run: |
+          xcodebuild -project Tether.xcodeproj -scheme Tether -configuration Release \
+            -destination 'generic/platform=macOS' -derivedDataPath build \
+            ARCHS=${{ matrix.arch }} ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM="" \
+            DEPLOYMENT_POSTPROCESSING=YES ENABLE_CODE_COVERAGE=NO CLANG_COVERAGE_MAPPING=NO \
+            build -quiet
+
+      - name: Verify architecture and signing
+        run: |
+          app="build/Build/Products/Release/Tether.app"
+          binary="$app/Contents/MacOS/Tether"
+          built_archs=$(lipo -archs "$binary")
+          [[ "$built_archs" == "${{ matrix.arch }}" ]] \
+            || { echo "Expected ${{ matrix.arch }}, built: $built_archs" >&2; exit 1; }
+          codesign --verify --deep --strict "$app"
+          echo "Tether $VERSION ($built_archs) verified"
+
+      - name: Package app and disk image
+        run: |
+          app="build/Build/Products/Release/Tether.app"
+
+          ditto -c -k --keepParent "$app" "Tether-$VERSION-${{ matrix.label }}.zip"
+
+          mkdir -p dmg-staging
+          ditto "$app" "dmg-staging/Tether.app"
+          ln -s /Applications "dmg-staging/Applications"
+          hdiutil create -quiet -volname "Tether $VERSION" -srcfolder dmg-staging \
+            -format UDZO -imagekey zlib-level=9 "Tether-$VERSION-${{ matrix.label }}.dmg"
+          hdiutil verify -quiet "Tether-$VERSION-${{ matrix.label }}.dmg"
+
+          echo "## Tether $VERSION — ${{ matrix.label }} (${{ matrix.arch }})" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          shasum -a 256 "Tether-$VERSION-${{ matrix.label }}.dmg" "Tether-$VERSION-${{ matrix.label }}.zip" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "Ad-hoc signed: for testing only, not installable over a release (docs/signing.md)." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tether-$VERSION-${{ matrix.label }}
+          path: |
+            Tether-$VERSION-${{ matrix.label }}.dmg
+            Tether-$VERSION-${{ matrix.label }}.zip
+          if-no-files-found: error
