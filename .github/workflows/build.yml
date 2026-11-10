@@ -45,6 +45,8 @@ jobs:
       # Ad-hoc signing: CI has no signing identities, and the test host
       # (Tether.app) must be signed to launch. Only TetherTests runs; the
       # UI-test target is empty boilerplate and needs a windowserver session.
+      # The raw log is kept because xcbeautify's rendering of Swift Testing
+      # output can mislabel results.
       - name: Run unit tests
         run: |
           xcodebuild test \
@@ -55,7 +57,14 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY=- \
             DEVELOPMENT_TEAM="" \
-            | xcbeautify --renderer github-actions
+            2>&1 | tee raw-unit-tests.log | xcbeautify --renderer github-actions
+
+      - name: Upload raw test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-unit-tests-log
+          path: raw-unit-tests.log
 
   build:
     name: Release (${{ matrix.label }})
@@ -127,8 +136,8 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Tether-$VERSION-${{ matrix.label }}
+          name: Tether-${{ env.VERSION }}-${{ matrix.label }}
           path: |
-            Tether-$VERSION-${{ matrix.label }}.dmg
-            Tether-$VERSION-${{ matrix.label }}.zip
+            Tether-${{ env.VERSION }}-${{ matrix.label }}.dmg
+            Tether-${{ env.VERSION }}-${{ matrix.label }}.zip
           if-no-files-found: error
