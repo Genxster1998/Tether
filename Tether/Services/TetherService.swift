@@ -346,6 +346,13 @@ public final class TetherService: ObservableObject, UDPDiscoveryDelegate, MDNSDi
         // opening a payload socket or consuming disk space; text still arrives.
         if packet.type == "kdeconnect.notification",
            size > NotificationImages.maximumPayloadSize { return }
+        // Clipboard images share the Android fork's 50 MB cap; refuse anything
+        // larger before it reaches the pasteboard.
+        if packet.type == ClipboardPlugin.clipboardFileType,
+           size > ClipboardPlugin.maximumImagePayloadSize {
+            TetherLog("[TetherService] Refusing clipboard image of \(size) bytes over the cap")
+            return
+        }
         guard let rawPort = packet.payloadTransferInfo?["port"]?.value,
               let port = Self.payloadPort(from: rawPort) else {
             TetherLog("[TetherService] \(packet.type) announced \(size) bytes but no usable payload port: \(String(describing: packet.payloadTransferInfo))")

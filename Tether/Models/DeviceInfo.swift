@@ -77,6 +77,8 @@ public struct DeviceInfo: Codable, Sendable, Identifiable {
         "kdeconnect.notification.reply",
         "kdeconnect.clipboard",
         "kdeconnect.clipboard.connect",
+        // Clipboard images, as binary payloads
+        "kdeconnect.clipboard.file",
         "kdeconnect.battery",
         // Media control: state reports from the peer's player.
         "kdeconnect.mpris",
@@ -120,6 +122,8 @@ public struct DeviceInfo: Codable, Sendable, Identifiable {
         "kdeconnect.notification.reply",
         "kdeconnect.clipboard",
         "kdeconnect.clipboard.connect",
+        // Clipboard images, as binary payloads
+        "kdeconnect.clipboard.file",
         "kdeconnect.battery",
         // Media transport and state queries.
         "kdeconnect.mpris.request",
