@@ -20,11 +20,15 @@ struct ClipboardImageTests {
     // MARK: - Packet construction (plan §5.1)
 
     /// The announcement `broadcastImage` sends must survive a serialize
-    /// round-trip with its filename, payload size, and integer port intact.
+    /// round-trip with its filename, timestamp, payload size, and integer
+    /// port intact.
     @Test func testClipboardFileAnnouncementRoundTrip() throws {
         let packet = NetworkPacket(
             type: ClipboardPlugin.clipboardFileType,
-            body: ["filename": AnyCodable("1234567890123.png")],
+            body: [
+                "filename": AnyCodable("1234567890123.png"),
+                "timestamp": AnyCodable(Int64(1_794_340_139_939))
+            ],
             payloadSize: 123_456,
             payloadTransferInfo: ["port": AnyCodable(Int(1739))]
         )
@@ -32,6 +36,7 @@ struct ClipboardImageTests {
         let decoded = try NetworkPacket.unserialize(from: packet.serialize())
         #expect(decoded.type == "kdeconnect.clipboard.file")
         #expect(decoded.string(for: "filename") == "1234567890123.png")
+        #expect(decoded.int64(for: "timestamp") == 1_794_340_139_939)
         #expect(decoded.payloadSize == 123_456)
         // The port travels in payloadTransferInfo, not the body (int(for:)
         // reads only the body).
@@ -114,6 +119,20 @@ struct ClipboardImageTests {
         )
         #expect(!ClipboardPlugin.canReceiveImages(stockPhone))
         #expect(!ClipboardPlugin.canReceiveImages(nil))
+    }
+
+    // MARK: - Timestamp arbitration (connect-time resend)
+
+    /// The peer resends its current clipboard image on reconnect; a stale one
+    /// must not clobber newer local clipboard content.
+    @Test func testStaleRemoteImageIsIgnored() {
+        // A packet without a timestamp (older peer) is always applied.
+        #expect(ClipboardPlugin.shouldApplyRemoteImage(packetTimestamp: 0, lastLocalClipboardTimestamp: 999))
+        // A newer or equal remote clip wins.
+        #expect(ClipboardPlugin.shouldApplyRemoteImage(packetTimestamp: 1000, lastLocalClipboardTimestamp: 999))
+        #expect(ClipboardPlugin.shouldApplyRemoteImage(packetTimestamp: 999, lastLocalClipboardTimestamp: 999))
+        // An older remote clip — the reconnect resend — is dropped.
+        #expect(!ClipboardPlugin.shouldApplyRemoteImage(packetTimestamp: 500, lastLocalClipboardTimestamp: 999))
     }
 
     // MARK: - TIFF to PNG conversion

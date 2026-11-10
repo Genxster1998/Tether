@@ -50,6 +50,11 @@ public final class ClipboardPlugin: TetherPlugin, @unchecked Sendable {
         let currentCount = NSPasteboard.general.changeCount
         guard currentCount != lastChangeCount else { return }
         lastChangeCount = currentCount
+        // Any local pasteboard touch — including a manual clear, which carries
+        // neither text nor image — marks the local clipboard as the newest
+        // version, so a peer's reconnect resend cannot resurrect content the
+        // user just removed.
+        lastLocalClipboardTimestamp = Int64(Date().timeIntervalSince1970 * 1000)
 
         // Image path: a Finder file copy puts a TIFF icon alongside the file
         // URL; sync only genuine image copies, and let them take priority over
@@ -61,11 +66,11 @@ public final class ClipboardPlugin: TetherPlugin, @unchecked Sendable {
                 TetherLog("[ClipboardPlugin] Clipboard image is \(png.count) bytes, over the \(Self.maximumImagePayloadSize) byte cap; not syncing")
             } else if Self.shouldBroadcastImage(png, lastReceivedImageData: lastReceivedImageData, lastSentImageData: lastSentImageData) {
                 lastSentImageData = png
-                lastLocalClipboardTimestamp = Int64(Date().timeIntervalSince1970 * 1000)
                 let filename = "\(lastLocalClipboardTimestamp).png"
+                let timestamp = lastLocalClipboardTimestamp
                 TetherLog("[ClipboardPlugin] Local clipboard image changed (\(png.count) bytes); broadcasting to paired devices")
                 sendQueue.async { [weak self] in
-                    self?.broadcastImage(data: png, filename: filename)
+                    self?.broadcastImage(data: png, filename: filename, timestamp: timestamp)
                 }
                 return
             }
@@ -79,7 +84,6 @@ public final class ClipboardPlugin: TetherPlugin, @unchecked Sendable {
         }
 
         lastSentContent = text
-        lastLocalClipboardTimestamp = Int64(Date().timeIntervalSince1970 * 1000)
         TetherLog("[ClipboardPlugin] Local clipboard changed: \(text.prefix(30))... Broadcasting to paired devices")
         broadcastClipboard(content: text)
     }
@@ -155,6 +159,15 @@ public final class ClipboardPlugin: TetherPlugin, @unchecked Sendable {
               let paired = TrustStore.shared.pairedDevice(for: deviceId),
               paired.isClipboardSyncEnabled else { return }
 
+        // The peer resends its current clipboard image on every reconnect;
+        // drop it when the local clipboard was touched more recently, so a
+        // flapping connection cannot keep clobbering newer local content.
+        let packetTime = packet.int64(for: "timestamp", default: 0)
+        guard Self.shouldApplyRemoteImage(packetTimestamp: packetTime, lastLocalClipboardTimestamp: lastLocalClipboardTimestamp) else {
+            TetherLog("[ClipboardPlugin] Ignoring clipboard image with older timestamp: \(packetTime) vs \(lastLocalClipboardTimestamp)")
+            return
+        }
+
         guard let data = try? Data(contentsOf: fileURL),
               let image = NSImage(data: data),
               let tiff = image.tiffRepresentation else {
@@ -172,6 +185,9 @@ public final class ClipboardPlugin: TetherPlugin, @unchecked Sendable {
             self.lastChangeCount = NSPasteboard.general.changeCount
             self.lastReceivedImageData = png ?? tiff
             self.lastSentImageData = self.lastReceivedImageData
+            if packetTime > 0 {
+                self.lastLocalClipboardTimestamp = packetTime
+            }
             TetherLog("[ClipboardPlugin] Synced image from \(connection.peerDeviceInfo?.deviceName ?? "Device") (\(data.count) bytes)")
         }
     }
@@ -195,7 +211,7 @@ public final class ClipboardPlugin: TetherPlugin, @unchecked Sendable {
     /// the upload to finish, mirroring `SharePlugin`'s synchronous send.
     /// Must run off the main thread; the semaphore blocks until each transfer
     /// completes (or times out inside `PayloadUploader`).
-    private func broadcastImage(data: Data, filename: String) {
+    private func broadcastImage(data: Data, filename: String, timestamp: Int64) {
         let tempURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("tether-clipboard-\(UUID().uuidString).png")
         do {
@@ -222,7 +238,10 @@ public final class ClipboardPlugin: TetherPlugin, @unchecked Sendable {
                 onReady: { offer in
                     let packet = NetworkPacket(
                         type: Self.clipboardFileType,
-                        body: ["filename": AnyCodable(filename)],
+                        body: [
+                            "filename": AnyCodable(filename),
+                            "timestamp": AnyCodable(timestamp)
+                        ],
                         payloadSize: offer.size,
                         payloadTransferInfo: ["port": AnyCodable(Int(offer.port))]
                     )
@@ -264,6 +283,13 @@ public final class ClipboardPlugin: TetherPlugin, @unchecked Sendable {
     /// stock KDE Connect silently skips them.
     static func canReceiveImages(_ info: DeviceInfo?) -> Bool {
         info?.incomingCapabilities.contains(clipboardFileType) == true
+    }
+
+    /// A remote image is applied only if it is at least as new as the last
+    /// local clipboard change; a missing timestamp (an older peer) is always
+    /// applied. Mirrors the text connect protocol's timestamp arbitration.
+    static func shouldApplyRemoteImage(packetTimestamp: Int64, lastLocalClipboardTimestamp: Int64) -> Bool {
+        packetTimestamp <= 0 || packetTimestamp >= lastLocalClipboardTimestamp
     }
 
     static func tiffToPng(_ tiff: Data) -> Data? {
