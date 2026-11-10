@@ -9,6 +9,9 @@
 #           exactly how scripts/release.sh produces both disk images on one
 #           machine.
 #
+# The runners use the xcode-27 image: the project file is in the Xcode 27
+# format (objectVersion 110), which Xcode 26 cannot open.
+#
 # Artifacts are ad-hoc signed (CODE_SIGN_IDENTITY="-"): the runners hold no
 # "Tether Self-Signed" certificate, and the in-app updater refuses to install
 # anything signed differently (docs/signing.md). So these DMGs are for
@@ -30,7 +33,7 @@ concurrency:
 jobs:
   test:
     name: Unit tests
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 45
     steps:
       - name: Check out
@@ -52,7 +55,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY=- \
             DEVELOPMENT_TEAM="" \
-            | xcbeautify --renderer github
+            | xcbeautify --renderer github-actions
 
   build:
     name: Release (${{ matrix.label }})
@@ -65,7 +68,7 @@ jobs:
             label: AppleSilicon
           - arch: x86_64
             label: Intel
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 60
     steps:
       - name: Check out
