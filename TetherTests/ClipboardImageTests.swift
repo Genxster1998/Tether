@@ -33,7 +33,8 @@ struct ClipboardImageTests {
         #expect(decoded.type == "kdeconnect.clipboard.file")
         #expect(decoded.string(for: "filename") == "1234567890123.png")
         #expect(decoded.payloadSize == 123_456)
-        #expect(decoded.int(for: "port") == 1739)
+        // The port travels in payloadTransferInfo, not the body (int(for:)
+        // reads only the body).
         #expect(decoded.payloadTransferInfo?["port"]?.value as? Int == 1739)
     }
 

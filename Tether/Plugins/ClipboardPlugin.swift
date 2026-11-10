@@ -7,7 +7,7 @@ import AppKit
 import Foundation
 
 public final class ClipboardPlugin: TetherPlugin, @unchecked Sendable {
-    public static let clipboardFileType = "kdeconnect.clipboard.file"
+    nonisolated public static let clipboardFileType = "kdeconnect.clipboard.file"
 
     /// Cap for image sync in either direction, matching the Android fork and
     /// upstream KDE's default `maxClipboardFileSizeMB`.

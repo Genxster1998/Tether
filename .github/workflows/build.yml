@@ -30,6 +30,13 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
+# bash with pipefail: the default shell is plain `bash -e`, whose pipeline
+# exit status is the last command's — a failed xcodebuild upstream of
+# xcbeautify or tee would otherwise go unnoticed and the job would pass.
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: Unit tests
