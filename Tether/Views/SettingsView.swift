@@ -229,6 +229,7 @@ private struct GeneralSettings: View {
     @AppStorage(CallMediaPauser.settingKey) private var pauseMediaDuringCalls = true
     @AppStorage(CallCard.settingKey) private var showCallCard = true
     @AppStorage(AwayLock.settingKey) private var lockWhenPhoneLeaves = false
+    @AppStorage(TabBarStyle.settingKey) private var tabBarStyle: TabBarStyle = .icons
 
     var body: some View {
         Form {
@@ -251,6 +252,11 @@ private struct GeneralSettings: View {
                 Toggle(isOn: $reduceMotion) {
                     Text("Reduce motion")
                     Text("Turns off Tether's animations, such as the drop highlight and list changes.")
+                }
+                Picker("Tab bar", selection: $tabBarStyle) {
+                    ForEach(TabBarStyle.allCases) { style in
+                        Text(style.title).tag(style)
+                    }
                 }
                 Toggle(isOn: $copyCodes) {
                     Text("Copy verification codes automatically")

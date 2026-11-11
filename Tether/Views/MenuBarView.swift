@@ -20,7 +20,7 @@ public struct MenuBarView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
             header
                 .staggeredEntrance(0)
 
@@ -60,8 +60,9 @@ public struct MenuBarView: View {
                 MenuRow(title: "Quit Tether", systemImage: "power") { NSApp.terminate(nil) }
             }
         }
-        .padding(8)
-        .frame(width: 340)
+        .padding(6)
+        .frame(width: 320)
+        .background(PopoverWindowCornerRadius(radius: GlassMetrics.panelRadius).frame(width: 0, height: 0))
         .dropDestination(for: URL.self) { urls, _ in
             guard let device = appModel.primaryDevice else { return false }
             let files = urls.filter(\.isFileURL)
@@ -76,10 +77,12 @@ public struct MenuBarView: View {
                         Label("Send to \(device.name)", systemImage: "square.and.arrow.up")
                             .font(.headline)
                             .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(.regularMaterial, in: .capsule)
+                            .padding(.vertical, 4)
+                            .background(.regularMaterial, in: .rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: GlassMetrics.panelRadius, style: .continuous)
+                                .strokeBorder(.separator, lineWidth: 1))
                     }
-                    .padding(4)
+                    .padding(3)
                     .allowsHitTesting(false)
             }
         }
@@ -90,34 +93,33 @@ public struct MenuBarView: View {
     // MARK: - Sections
 
     private var header: some View {
-        HStack {
+        HStack(spacing: 6) {
             Text("Tether")
-                .font(.title3.weight(.bold))
+                .font(.headline.weight(.bold))
             Spacer()
             let connected = !appModel.connectedDevices.isEmpty
             Label(connected ? "Connected" : "Not Connected", systemImage: "circle.fill")
                 .labelStyle(StatusDotLabelStyle(color: connected ? .green : .secondary))
-                .font(.callout)
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 6)
-        .padding(.top, 2)
+        .padding(.horizontal, 4)
     }
 
     private func deviceCard(_ device: DeviceViewModel) -> some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 12) {
+        VStack(spacing: 6) {
+            HStack(spacing: 8) {
                 Image(systemName: device.deviceType.systemImageName)
-                    .font(.system(size: 26, weight: .light))
+                    .font(.system(size: 20, weight: .light))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.tint)
-                    .frame(width: 30)
+                    .frame(width: 24)
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 1) {
                     Text(device.name)
-                        .font(.headline)
+                        .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
-                    HStack(spacing: 10) {
+                    HStack(spacing: 8) {
                         if let battery = device.batteryPercent {
                             Label("\(battery)%", systemImage: DeviceSymbols.battery(battery, charging: device.isCharging))
                         }
@@ -128,33 +130,26 @@ public struct MenuBarView: View {
                             Label("Tailscale", systemImage: "point.3.connected.trianglepath.dotted")
                         }
                     }
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 0)
                 if appModel.connectedDevices.count > 1 { deviceSwitcher }
             }
-            .padding(.horizontal, 6)
-            .padding(.top, 4)
 
-            HStack(spacing: 0) {
-                GlassCircleButton(title: "Find", systemImage: "speaker.wave.3.fill", size: 40) { device.findMyPhone() }
-                    .frame(maxWidth: .infinity)
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 4), GridItem(.flexible(), spacing: 4)], spacing: 4) {
+                TintedActionButton(title: "Find", systemImage: "speaker.wave.3.fill") { device.findMyPhone() }
                 if device.canLock {
-                    GlassCircleButton(title: "Lock", systemImage: "lock.fill", size: 40) { device.lockDevice() }
-                        .frame(maxWidth: .infinity)
+                    TintedActionButton(title: "Lock", systemImage: "lock.fill") { device.lockDevice() }
                 }
-                GlassCircleButton(title: "Clipboard", systemImage: "doc.on.clipboard", size: 40) { device.sendClipboard() }
-                    .frame(maxWidth: .infinity)
-                GlassCircleButton(title: "Send Files", systemImage: "arrow.up.doc", size: 40) {
+                TintedActionButton(title: "Clipboard", systemImage: "doc.on.clipboard") { device.sendClipboard() }
+                TintedActionButton(title: "Send Files", systemImage: "arrow.up.doc") {
                     NSApp.activate()
                     device.sendFiles(FilePicker.chooseFiles(sendingTo: device.name))
                 }
-                .frame(maxWidth: .infinity)
             }
-            .padding(.bottom, 2)
         }
-        .padding(8)
+        .padding(6)
         .glassPanel()
     }
 
@@ -165,19 +160,29 @@ public struct MenuBarView: View {
             }
             .pickerStyle(.inline)
         } label: {
-            Image(systemName: "chevron.up.chevron.down")
-                .font(.callout.weight(.semibold))
+            HStack(spacing: 3) {
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 8, weight: .bold))
+                Text("Switch")
+                    .font(.system(size: 9, weight: .semibold))
+            }
+            .foregroundStyle(.tint)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 3)
+            .background(.tint.opacity(0.14), in: .rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: GlassMetrics.panelRadius, style: .continuous)
+                .strokeBorder(.tint.opacity(0.35), lineWidth: 1))
         }
         .menuStyle(.button)
         .menuIndicator(.hidden)
-        .buttonStyle(.borderless)
+        .buttonStyle(.plain)
         .fixedSize()
         .accessibilityLabel("Choose device")
     }
 
     private func nowPlayingCard(_ device: DeviceViewModel) -> some View {
         PopoverCard {
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 Group {
                     if let image = device.albumArt {
                         Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
@@ -188,23 +193,23 @@ public struct MenuBarView: View {
                             .background(.quaternary)
                     }
                 }
-                .frame(width: 38, height: 38)
+                .frame(width: 32, height: 32)
                 .clipShape(.rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
                 .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 1) {
+                VStack(alignment: .leading, spacing: 0) {
                     Text(device.nowPlayingTitle ?? "")
                         .font(.subheadline.weight(.medium))
                         .lineLimit(1)
                     Text(device.nowPlayingArtist ?? "")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
 
                 Spacer(minLength: 4)
 
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     Button(device.nowPlayingIsPlaying ? "Pause" : "Play",
                            systemImage: device.nowPlayingIsPlaying ? "pause.fill" : "play.fill") {
                         device.playPauseMedia()
@@ -214,14 +219,14 @@ public struct MenuBarView: View {
                 }
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
-                .font(.title3)
+                .font(.body)
             }
         }
     }
 
     private func pairRequestCard(_ request: PairRequestViewModel) -> some View {
         PopoverCard {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 10) {
                     DeviceSymbol(type: request.deviceType)
                         .font(.title2)
@@ -253,7 +258,7 @@ public struct MenuBarView: View {
 
     private var emptyCard: some View {
         PopoverCard {
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 ProgressView()
                     .controlSize(.small)
                 VStack(alignment: .leading, spacing: 1) {
@@ -273,7 +278,7 @@ public struct MenuBarView: View {
 
     private var nearbyCard: some View {
         PopoverCard {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Nearby")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
@@ -309,9 +314,73 @@ private struct PopoverCard<Content: View>: View {
 
     var body: some View {
         content
-            .padding(10)
+            .padding(8)
             .frame(maxWidth: .infinity, alignment: .leading)
             .glassPanel()
+    }
+}
+
+/// A translucent, tinted, slightly raised action button for the popover.
+private struct TintedActionButton: View {
+    let title: String
+    let systemImage: String
+    var tint: Color = .accentColor
+    let action: () -> Void
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 11, weight: .semibold))
+                    .symbolRenderingMode(.hierarchical)
+                Text(title)
+                    .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(isHovering ? AnyShapeStyle(.white) : AnyShapeStyle(tint))
+            .padding(.horizontal, 7)
+            .padding(.vertical, 5)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: GlassMetrics.panelRadius, style: .continuous)
+                    .fill(isHovering ? AnyShapeStyle(tint.opacity(0.85)) : AnyShapeStyle(tint.opacity(0.14)))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: GlassMetrics.panelRadius, style: .continuous)
+                    .strokeBorder(isHovering ? AnyShapeStyle(tint.opacity(0.9)) : AnyShapeStyle(tint.opacity(0.32)), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(isHovering ? 0.18 : 0.10), radius: 1.5, y: 1)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovering = $0 }
+        .help(title)
+    }
+}
+
+/// Squashes the menu bar popover's window corners to Tether's radius; the
+/// system picks its own otherwise.
+private struct PopoverWindowCornerRadius: NSViewRepresentable {
+    let radius: CGFloat
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { Self.apply(to: view, radius: radius) }
+        return view
+    }
+
+    func updateNSView(_ view: NSView, context: Context) {
+        DispatchQueue.main.async { Self.apply(to: view, radius: radius) }
+    }
+
+    private static func apply(to view: NSView, radius: CGFloat) {
+        guard let frameView = view.window?.contentView?.superview else { return }
+        frameView.wantsLayer = true
+        frameView.layer?.cornerRadius = radius
+        frameView.layer?.cornerCurve = .continuous
+        frameView.layer?.masksToBounds = true
     }
 }
 
@@ -338,8 +407,8 @@ private struct MenuRow: View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 4)
                 .foregroundStyle(isHovering ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
                 .background(isHovering ? AnyShapeStyle(.tint) : AnyShapeStyle(.clear), in: .rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
                 .contentShape(.rect)

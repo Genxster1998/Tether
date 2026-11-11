@@ -34,6 +34,23 @@ enum DeviceSection: String, CaseIterable, Identifiable {
     }
 }
 
+/// How the toolbar tab bar labels its sections.
+enum TabBarStyle: String, CaseIterable, Identifiable {
+    case icons, labels
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .icons: "Icons only"
+        case .labels: "Icons and labels"
+        }
+    }
+
+    /// Settings › General › Tab bar.
+    static let settingKey = "tether_tab_bar_style"
+}
+
 /// What the sidebar can select. Selecting a device shows its overview.
 enum SidebarItem: Hashable {
     case device(String)

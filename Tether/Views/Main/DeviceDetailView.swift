@@ -16,6 +16,7 @@ struct DeviceDetailView: View {
     let onConnectByIP: () -> Void
 
     @State private var isDropTargeted = false
+    @AppStorage(TabBarStyle.settingKey) private var tabBarStyle: TabBarStyle = .icons
 
     var body: some View {
         Group {
@@ -35,11 +36,13 @@ struct DeviceDetailView: View {
                 ToolbarItem(placement: .principal) {
                     Picker("Section", selection: Binding(get: { section }, set: onSelectSection)) {
                         ForEach(DeviceSection.allCases) { section in
-                            Text(section.title).tag(section)
+                            Label(section.title, systemImage: section.systemImage)
+                                .tag(section)
                         }
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
+                    .modifier(SegmentTabLabels(style: tabBarStyle))
                     .fixedSize()
                 }
             }
@@ -92,6 +95,20 @@ struct DeviceDetailView: View {
             }
         }
         .animation(.easeOut(duration: 0.15), value: isDropTargeted)
+    }
+}
+
+/// Shows the tab bar with or without text, per Settings › General.
+private struct SegmentTabLabels: ViewModifier {
+    let style: TabBarStyle
+
+    func body(content: Content) -> some View {
+        switch style {
+        case .icons:
+            content.labelStyle(.iconOnly)
+        case .labels:
+            content.labelStyle(.titleAndIcon)
+        }
     }
 }
 
