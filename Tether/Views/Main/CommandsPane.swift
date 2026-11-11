@@ -27,7 +27,7 @@ struct CommandsPane: View {
                         .glassRow()
                 } else {
                     ForEach(Array(device.commands.enumerated()), id: \.element.id) { index, command in
-                        if index > 0 { Divider().padding(.leading, 16) }
+                        if index > 0 { Divider().padding(.leading, 10) }
                         row(for: command)
                             .glassRow()
                     }
@@ -134,7 +134,7 @@ private struct CommandEditor: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(!canSave)
             }
-            .padding([.horizontal, .bottom], 20)
+            .padding([.horizontal, .bottom], 12)
         }
         .frame(width: 480)
         .navigationTitle(isNew ? "New Command" : "Edit Command")

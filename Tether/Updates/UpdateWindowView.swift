@@ -143,8 +143,8 @@ struct ReleaseNotesView: View {
             .padding(12)
         }
         .frame(height: 220)
-        .background(.background.secondary, in: .rect(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.separator))
+        .background(.background.secondary, in: .rect(cornerRadius: GlassMetrics.panelRadius))
+        .overlay(RoundedRectangle(cornerRadius: GlassMetrics.panelRadius).strokeBorder(.separator))
     }
 
     private enum Block {

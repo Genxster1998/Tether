@@ -60,7 +60,7 @@ public struct MenuBarView: View {
                 MenuRow(title: "Quit Tether", systemImage: "power") { NSApp.terminate(nil) }
             }
         }
-        .padding(12)
+        .padding(8)
         .frame(width: 340)
         .dropDestination(for: URL.self) { urls, _ in
             guard let device = appModel.primaryDevice else { return false }
@@ -70,13 +70,13 @@ public struct MenuBarView: View {
         } isTargeted: { isDropTargeted = $0 }
         .overlay {
             if isDropTargeted, let device = appModel.primaryDevice {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: GlassMetrics.panelRadius, style: .continuous)
                     .strokeBorder(.tint, style: StrokeStyle(lineWidth: 2, dash: [7, 5]))
                     .overlay {
                         Label("Send to \(device.name)", systemImage: "square.and.arrow.up")
                             .font(.headline)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
                             .background(.regularMaterial, in: .capsule)
                     }
                     .padding(4)
@@ -105,7 +105,7 @@ public struct MenuBarView: View {
     }
 
     private func deviceCard(_ device: DeviceViewModel) -> some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 10) {
             HStack(spacing: 12) {
                 Image(systemName: device.deviceType.systemImageName)
                     .font(.system(size: 26, weight: .light))
@@ -155,7 +155,7 @@ public struct MenuBarView: View {
             .padding(.bottom, 2)
         }
         .padding(8)
-        .glassPanel(radius: 20)
+        .glassPanel()
     }
 
     private var deviceSwitcher: some View {
@@ -189,7 +189,7 @@ public struct MenuBarView: View {
                     }
                 }
                 .frame(width: 38, height: 38)
-                .clipShape(.rect(cornerRadius: 6, style: .continuous))
+                .clipShape(.rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
                 .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 1) {
@@ -309,9 +309,9 @@ private struct PopoverCard<Content: View>: View {
 
     var body: some View {
         content
-            .padding(14)
+            .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .glassPanel(radius: 20)
+            .glassPanel()
     }
 }
 
@@ -341,7 +341,7 @@ private struct MenuRow: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 5)
                 .foregroundStyle(isHovering ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
-                .background(isHovering ? AnyShapeStyle(.tint) : AnyShapeStyle(.clear), in: .rect(cornerRadius: 6, style: .continuous))
+                .background(isHovering ? AnyShapeStyle(.tint) : AnyShapeStyle(.clear), in: .rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)

@@ -251,8 +251,8 @@ struct CallCardView: View {
     }
 
     private func ringing(silenced: Bool) -> some View {
-        VStack(spacing: 14) {
-            CallerAvatar(caller: caller, size: 76, pulses: !silenced)
+        VStack(spacing: 10) {
+            CallerAvatar(caller: caller, size: 60, pulses: !silenced)
                 .padding(.top, 4)
             VStack(spacing: 3) {
                 Text(caller.name)
@@ -270,7 +270,7 @@ struct CallCardView: View {
                     .lineLimit(1)
                     .padding(.top, 2)
             }
-            HStack(spacing: 36) {
+            HStack(spacing: 24) {
                 GlassCircleButton(
                     title: silenced ? "Silenced" : "Silence",
                     systemImage: silenced ? "bell.slash.fill" : "bell.slash",
@@ -280,10 +280,10 @@ struct CallCardView: View {
                 GlassCircleButton(title: "Dismiss", systemImage: "xmark", size: 50, action: dismiss)
             }
         }
-        .padding(.horizontal, 22)
-        .padding(.vertical, 20)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .frame(width: 280)
-        .glassPanel(radius: 32)
+        .glassPanel()
         .padding(1)
     }
 
@@ -312,9 +312,9 @@ struct CallCardView: View {
         }
         .padding(.leading, 8)
         .padding(.trailing, 10)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
         .frame(width: 230)
-        .glassPanel(radius: 100)
+        .glassPanel()
         .padding(1)
     }
 }

@@ -7,12 +7,19 @@
 //  Glass is used for things that float over content (panels, round buttons,
 //  status pills), never as a fill for whole screens.
 //
+//  The look is compact and squared-off: tight paddings, corner radii capped
+//  at 5, and a distinct 1pt separator border so every panel reads as a panel
+//  against the window background in both light and dark appearance.
+//
 
 import SwiftUI
 
 enum GlassMetrics {
-    static let panelRadius: CGFloat = 20
-    static let cardRadius: CGFloat = 40
+    /// The largest corner radius anywhere in the app.
+    static let panelRadius: CGFloat = 5
+    static let cardRadius: CGFloat = 5
+    /// One pixel of border, visible in light and dark themes.
+    static let borderWidth: CGFloat = 1
 }
 
 extension View {
@@ -20,22 +27,28 @@ extension View {
     @ViewBuilder
     func glassPanel(radius: CGFloat = GlassMetrics.panelRadius) -> some View {
         if #available(macOS 26.0, *) {
-            self.glassEffect(.regular, in: .rect(cornerRadius: radius, style: .continuous))
+            self
+                .glassEffect(.regular, in: .rect(cornerRadius: radius, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .strokeBorder(.separator.opacity(0.8), lineWidth: GlassMetrics.borderWidth))
         } else {
             self
                 .background(.regularMaterial, in: .rect(cornerRadius: radius, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(.separator.opacity(0.6), lineWidth: 0.5))
+                .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .strokeBorder(.separator, lineWidth: GlassMetrics.borderWidth))
         }
     }
 
-    /// A text field's capsule: glass on macOS 26, a soft fill before.
+    /// A text field's container: glass on macOS 26, a soft fill before.
     @ViewBuilder
     func glassCapsule() -> some View {
         if #available(macOS 26.0, *) {
-            self.glassEffect(.regular, in: .capsule)
+            self.glassEffect(.regular, in: .rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
         } else {
             self
-                .background(.quaternary.opacity(0.7), in: .capsule)
+                .background(.quaternary.opacity(0.7), in: .rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: GlassMetrics.panelRadius, style: .continuous)
+                    .strokeBorder(.separator.opacity(0.8), lineWidth: GlassMetrics.borderWidth))
         }
     }
 
@@ -65,16 +78,16 @@ struct GlassCircleButton: View {
     let title: String
     let systemImage: String
     var showsTitle = true
-    var size: CGFloat = 44
+    var size: CGFloat = 34
     var isProminent = false
     let action: () -> Void
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 3) {
             button
             if showsTitle {
                 Text(title)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .fixedSize()
@@ -112,7 +125,7 @@ struct GlassCircleButton: View {
     }
 }
 
-/// A small capsule saying how a device is connected.
+/// A small rounded rect saying how a device is connected.
 struct StatusPill: View {
     let text: String
     let systemImage: String
@@ -126,10 +139,10 @@ struct StatusPill: View {
                 .foregroundStyle(tint)
                 .contentTransition(.symbolEffect(.replace))
         }
-        .font(.callout.weight(.medium))
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .glassPanel(radius: 100)
+        .font(.caption.weight(.medium))
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .glassPanel()
     }
 }
 
@@ -175,7 +188,7 @@ struct GlassPage<Trailing: View, Content: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
+            VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(title)
@@ -190,8 +203,8 @@ struct GlassPage<Trailing: View, Content: View>: View {
                 content
             }
             .frame(maxWidth: 600, alignment: .leading)
-            .padding(.horizontal, 32)
-            .padding(.vertical, 28)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
             .frame(maxWidth: .infinity)
         }
     }
@@ -214,7 +227,7 @@ struct GlassSection<Trailing: View, Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 7) {
             PanelHeader(title) { trailing }
             VStack(spacing: 0) { content }
                 .glassPanel()
@@ -223,7 +236,7 @@ struct GlassSection<Trailing: View, Content: View>: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 4)
+                    .padding(.horizontal, 2)
             }
         }
     }
@@ -232,8 +245,8 @@ struct GlassSection<Trailing: View, Content: View>: View {
 extension View {
     /// Padding for a row inside a glass panel.
     func glassRow() -> some View {
-        padding(.horizontal, 16)
-            .padding(.vertical, 12)
+        padding(.horizontal, 10)
+            .padding(.vertical, 6)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

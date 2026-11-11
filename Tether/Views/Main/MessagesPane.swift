@@ -205,8 +205,8 @@ private struct ConversationView: View {
                     .lineLimit(1)
                 Spacer()
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
 
             Divider()
 
@@ -264,8 +264,8 @@ private struct MessageList: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 12)
+            .padding(.horizontal, 10)
+            .padding(.bottom, 8)
         }
         .defaultScrollAnchor(.bottom)
     }
@@ -292,8 +292,8 @@ private struct MessageComposer: View {
                 .lineLimit(1...6)
                 .focused(isFocused)
                 .onSubmit(submit)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
                 .glassCapsule()
 
             // Centred on the send button, which stays level with the field's last line.
@@ -309,8 +309,8 @@ private struct MessageComposer: View {
             }
             .padding(.bottom, 3.5)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
         .onChange(of: thread?.threadId, initial: true) { sim = device.defaultSIM(for: thread) }
         .onChange(of: device.sims) { if sim == nil { sim = device.defaultSIM(for: thread) } }
     }
@@ -348,7 +348,7 @@ private struct MessageBubble: View {
             .foregroundStyle(message.isOutgoing ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
             .background(
                 message.isOutgoing ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.primary.opacity(0.08)),
-                in: .rect(cornerRadius: 17, style: .continuous)
+                in: .rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous)
             )
             .help(message.date.formatted(date: .abbreviated, time: .shortened))
 
@@ -424,7 +424,7 @@ private struct NewConversationView: View {
                         VStack(spacing: 4) {
                             ForEach(sent) { MessageBubble(message: $0) }
                         }
-                        .padding(16)
+                        .padding(10)
                     }
                     .defaultScrollAnchor(.bottom)
                 } else {
@@ -498,8 +498,8 @@ private struct NewConversationView: View {
             Spacer(minLength: 0)
         }
         .frame(minHeight: 28)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
         .onExitCommand(perform: onCancel)
     }
 
@@ -524,7 +524,7 @@ private struct NewConversationView: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
                     .background(index == highlighted ? AnyShapeStyle(.tint.opacity(0.18)) : AnyShapeStyle(.clear),
-                                in: .rect(cornerRadius: 8, style: .continuous))
+                                in: .rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
                     .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
@@ -533,7 +533,7 @@ private struct NewConversationView: View {
         }
         .padding(6)
         .frame(width: 320)
-        .glassPanel(radius: 14)
+        .glassPanel()
         .padding(.leading, 46)
         .padding(.top, 4)
         .shadow(color: .black.opacity(0.12), radius: 12, y: 4)

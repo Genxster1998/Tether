@@ -32,7 +32,7 @@ struct FilesPane: View {
                         .glassRow()
                 } else {
                     ForEach(Array(device.transfers.enumerated()), id: \.element.id) { index, item in
-                        if index > 0 { Divider().padding(.leading, 56) }
+                        if index > 0 { Divider().padding(.leading, 42) }
                         TransferRow(item: item)
                             .glassRow()
                     }
@@ -50,7 +50,7 @@ private struct PhoneDriveSection: View {
     var body: some View {
         let state = files.driveState(for: device.id)
         GlassSection("Phone Drive") {
-            HStack(spacing: 14) {
+            HStack(spacing: 10) {
                 Image(systemName: state == .mounted ? "externaldrive.fill.badge.checkmark" : "externaldrive")
                     .font(.title2)
                     .symbolRenderingMode(.hierarchical)

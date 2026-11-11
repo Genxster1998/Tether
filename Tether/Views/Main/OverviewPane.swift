@@ -17,8 +17,8 @@ struct OverviewPane: View {
         ScrollView {
             details
                 .frame(maxWidth: 600, alignment: .leading)
-                .padding(.horizontal, 32)
-                .padding(.vertical, 28)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
                 .frame(maxWidth: .infinity)
         }
     }
@@ -26,21 +26,21 @@ struct OverviewPane: View {
     // MARK: Header and actions
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
                 Image(systemName: device.deviceType.systemImageName)
                     .resizable()
                     .scaledToFit()
                     .fontWeight(.light)
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.tint)
-                    .frame(width: 40, height: 56)
+                    .frame(width: 34, height: 46)
                     .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 5) {
                     Text(device.name)
                         .font(.largeTitle.weight(.bold))
                         .lineLimit(2)
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         StatusPill(
                             text: device.isViaTailscale ? "Tailscale" : "Wi-Fi",
                             systemImage: device.isViaTailscale ? "point.3.connected.trianglepath.dotted" : "wifi"
@@ -56,7 +56,7 @@ struct OverviewPane: View {
                 }
             }
 
-            HStack(spacing: 22) {
+            HStack(spacing: 16) {
                 GlassCircleButton(title: "Find", systemImage: "speaker.wave.3.fill") { device.findMyPhone() }
                 GlassCircleButton(title: "Clipboard", systemImage: "doc.on.clipboard") { device.sendClipboard() }
                 GlassCircleButton(title: "Send Files", systemImage: "arrow.up.doc") {
@@ -72,7 +72,7 @@ struct OverviewPane: View {
     // MARK: Details
 
     private var details: some View {
-        VStack(alignment: .leading, spacing: 28) {
+        VStack(alignment: .leading, spacing: 16) {
             header
 
             if device.hasNowPlaying {
@@ -80,7 +80,7 @@ struct OverviewPane: View {
             }
 
             if !device.notifications.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 7) {
                     PanelHeader("Notifications") {
                         if device.notifications.count > 3 {
                             Button("Show All") { onSelectSection(.notifications) }
@@ -89,7 +89,7 @@ struct OverviewPane: View {
                     }
                     VStack(spacing: 0) {
                         ForEach(Array(device.notifications.prefix(3).enumerated()), id: \.element.id) { index, item in
-                            if index > 0 { Divider().padding(.leading, 16) }
+                            if index > 0 { Divider().padding(.leading, 10) }
                             NotificationPreviewRow(item: item)
                         }
                     }
@@ -97,7 +97,7 @@ struct OverviewPane: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 7) {
                 PanelHeader("Files") {
                     if device.transfers.count > 3 {
                         Button("Show All") { onSelectSection(.files) }
@@ -108,15 +108,15 @@ struct OverviewPane: View {
                     if device.transfers.isEmpty {
                         Label("Drop files anywhere in this window to send them to \(device.name). Files it sends you are saved in Downloads.", systemImage: "arrow.down.doc")
                             .foregroundStyle(.secondary)
-                            .padding(16)
+                            .padding(10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     } else {
                         VStack(spacing: 0) {
                             ForEach(Array(device.transfers.prefix(3).enumerated()), id: \.element.id) { index, item in
-                                if index > 0 { Divider().padding(.leading, 16) }
+                                if index > 0 { Divider().padding(.leading, 10) }
                                 TransferRow(item: item)
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
                             }
                         }
                     }
@@ -137,12 +137,12 @@ private struct NowPlayingPanel: View {
     @State private var isEditingVolume = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 7) {
             PanelHeader("Now Playing")
-            VStack(spacing: 14) {
-                HStack(spacing: 14) {
+            VStack(spacing: 10) {
+                HStack(spacing: 10) {
                     artwork
-                    VStack(alignment: .leading, spacing: 3) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(device.nowPlayingTitle ?? "")
                             .font(.headline)
                             .lineLimit(1)
@@ -153,7 +153,7 @@ private struct NowPlayingPanel: View {
                         }
                     }
                     Spacer(minLength: 8)
-                    HStack(spacing: 18) {
+                    HStack(spacing: 14) {
                         Button("Previous", systemImage: "backward.fill") { device.previousMedia() }
                         Button(device.nowPlayingIsPlaying ? "Pause" : "Play",
                                systemImage: device.nowPlayingIsPlaying ? "pause.fill" : "play.fill") {
@@ -181,7 +181,7 @@ private struct NowPlayingPanel: View {
                 .disabled(!device.canSetVolume)
                 .help(device.canSetVolume ? "Media volume on \(device.name)" : "Start playing something on \(device.name) to change its volume")
             }
-            .padding(16)
+            .padding(10)
             .glassPanel()
         }
         .onAppear { draftVolume = device.volume }
@@ -201,16 +201,16 @@ private struct NowPlayingPanel: View {
             Image(nsImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(width: 56, height: 56)
-                .clipShape(.rect(cornerRadius: 10, style: .continuous))
-                .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
+                .frame(width: 44, height: 44)
+                .clipShape(.rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
+                .shadow(color: .black.opacity(0.18), radius: 4, y: 2)
                 .accessibilityHidden(true)
         } else {
             Image(systemName: "music.note")
-                .font(.title2)
+                .font(.title3)
                 .foregroundStyle(.secondary)
-                .frame(width: 56, height: 56)
-                .background(.quaternary, in: .rect(cornerRadius: 10, style: .continuous))
+                .frame(width: 44, height: 44)
+                .background(.quaternary, in: .rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
                 .accessibilityHidden(true)
         }
     }
@@ -246,8 +246,8 @@ private struct NotificationPreviewRow: View {
                     .padding(.top, 2)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 11)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .contain)
     }
@@ -263,12 +263,12 @@ private struct RemoteInputRow: View {
     var body: some View {
         Group {
             if !isTrusted {
-                HStack(spacing: 14) {
+                HStack(spacing: 10) {
                     Image(systemName: "cursorarrow.motionlines")
-                        .font(.title2)
+                        .font(.title3)
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.tint)
-                        .frame(width: 32)
+                        .frame(width: 28)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Use your phone as a trackpad")
                             .fontWeight(.semibold)
@@ -279,7 +279,7 @@ private struct RemoteInputRow: View {
                     Spacer(minLength: 8)
                     Button("Allow…") { InputSynthesizer.shared.openAccessibilitySettings() }
                 }
-                .padding(16)
+                .padding(10)
                 .glassPanel()
             }
         }

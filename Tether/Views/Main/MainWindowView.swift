@@ -183,8 +183,8 @@ struct DeviceSidebar: View {
                     .contentShape(.rect)
             }
             .buttonStyle(.borderless)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
         }
         .confirmationDialog(
             "Unpair \(deviceToUnpair?.name ?? "device")?",
@@ -225,7 +225,7 @@ private struct SidebarRowView: View {
             DeviceRow(device: row.device)
         case .section(_, let section):
             Label(section.title, systemImage: section.systemImage)
-                .padding(.leading, 18)
+                .padding(.leading, 10)
                 .badge(badgeCount(for: section))
         }
     }

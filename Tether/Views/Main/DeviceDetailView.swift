@@ -99,14 +99,14 @@ private struct DropOverlay: View {
     let deviceName: String
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
+        RoundedRectangle(cornerRadius: GlassMetrics.panelRadius, style: .continuous)
             .strokeBorder(.tint, lineWidth: 3)
-            .background(.tint.opacity(0.06), in: .rect(cornerRadius: 10, style: .continuous))
+            .background(.tint.opacity(0.06), in: .rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
             .overlay(alignment: .bottom) {
                 Text("Drop to send to \(deviceName)")
                     .font(.headline)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 7)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
                     .background(.bar, in: .capsule)
                     .padding(.bottom, 24)
             }
@@ -128,8 +128,8 @@ struct NotificationPermissionBanner: View {
             Button("Turn On…", action: openSettings)
                 .controlSize(.small)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
         .background(.orange.opacity(0.1))
         .overlay(alignment: .bottom) { Divider() }
     }
@@ -141,7 +141,7 @@ struct NearbyDeviceView: View {
     @Bindable var device: DeviceViewModel
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 12) {
             DeviceHero(type: device.deviceType, isActive: device.status != .offline)
 
             VStack(spacing: 6) {
@@ -176,7 +176,7 @@ struct NearbyDeviceView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: 380)
-        .padding(32)
+        .padding(20)
         .task(id: device.isAwaitingPairing) {
             // The phone may ignore the request; don't spin forever.
             guard device.isAwaitingPairing else { return }
@@ -196,7 +196,7 @@ struct OfflineDeviceView: View {
     @State private var isConfirmingUnpair = false
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 12) {
             DeviceHero(type: device.deviceType, isActive: device.status != .offline)
 
             VStack(spacing: 6) {
@@ -223,7 +223,7 @@ struct OfflineDeviceView: View {
                 .padding(.top, 8)
         }
         .frame(maxWidth: 380)
-        .padding(32)
+        .padding(20)
         .confirmationDialog("Unpair \(device.name)?", isPresented: $isConfirmingUnpair) {
             Button("Unpair", role: .destructive) { device.unpair() }
         } message: {
@@ -239,12 +239,12 @@ struct OnboardingView: View {
     let onConnectByIP: () -> Void
 
     var body: some View {
-        VStack(spacing: 28) {
-            VStack(spacing: 12) {
+        VStack(spacing: 18) {
+            VStack(spacing: 10) {
                 Image("TetherLogo")
                     .resizable()
                     .frame(width: 84, height: 84)
-                    .clipShape(.rect(cornerRadius: 19, style: .continuous))
+                    .clipShape(.rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
                     .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
                     .accessibilityHidden(true)
                 Text("Connect Your Android Phone")
@@ -276,7 +276,7 @@ struct OnboardingView: View {
                     .buttonStyle(.link)
             }
         }
-        .padding(40)
+        .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationTitle("Tether")
     }
@@ -303,7 +303,7 @@ struct PairRequestSheet: View {
     let onDecline: () -> Void
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 12) {
             DeviceHero(type: request.deviceType, isActive: true)
 
             VStack(spacing: 6) {
@@ -327,9 +327,9 @@ struct PairRequestSheet: View {
                     .font(.system(.callout, design: .monospaced))
                     .textSelection(.enabled)
                 }
-                .padding(12)
+                .padding(10)
                 .frame(maxWidth: .infinity)
-                .background(.quaternary.opacity(0.6), in: .rect(cornerRadius: 10, style: .continuous))
+                .background(.quaternary.opacity(0.6), in: .rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
             }
 
             HStack(spacing: 12) {
@@ -346,7 +346,7 @@ struct PairRequestSheet: View {
             }
             .controlSize(.large)
         }
-        .padding(28)
+        .padding(20)
         .frame(width: 420)
         .interactiveDismissDisabled()
     }
@@ -371,7 +371,7 @@ struct ConnectByIPSheet: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Connect by Address")
                     .font(.title3.bold())
@@ -410,7 +410,7 @@ struct ConnectByIPSheet: View {
                     .disabled(!isPlausible || isResolving)
             }
         }
-        .padding(24)
+        .padding(16)
         .frame(width: 420)
         .onAppear { isFocused = true }
     }

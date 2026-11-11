@@ -41,7 +41,7 @@ struct NotificationsPane: View {
                             .foregroundStyle(.secondary)
                     } content: {
                         ForEach(Array(group.items.enumerated()), id: \.element.id) { index, notification in
-                            if index > 0 { Divider().padding(.leading, 16) }
+                            if index > 0 { Divider().padding(.leading, 10) }
                             NotificationRow(notification: notification, device: device)
                         }
                     }
@@ -72,14 +72,14 @@ private struct NotificationRow: View {
                         .foregroundStyle(.secondary)
                         .frame(width: 18, height: 18)
                         .frame(width: 32, height: 32)
-                        .background(.quaternary, in: .rect(cornerRadius: 8, style: .continuous))
+                        .background(.quaternary, in: .rect(cornerRadius: GlassMetrics.panelRadius, style: .continuous))
                         .accessibilityLabel("\(notification.appName) icon")
                 } else if let data = notification.imageData, let image = NSImage(data: data) {
                     Image(nsImage: image)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 32, height: 32)
-                        .clipShape(.rect(cornerRadius: 6))
+                        .clipShape(.rect(cornerRadius: GlassMetrics.panelRadius))
                         .accessibilityLabel("Image from \(notification.appName)")
                 } else {
                     Image(systemName: "app.dashed")
@@ -117,7 +117,7 @@ private struct NotificationRow: View {
                 .padding(.top, 6)
                 .onAppear { isReplyFocused = true }
             } else if notification.code != nil || notification.replyId != nil || notification.isDismissable {
-                HStack(spacing: 16) {
+                HStack(spacing: 10) {
                     if let code = notification.code {
                         CopyCodeButton(code: code)
                     }
@@ -133,8 +133,8 @@ private struct NotificationRow: View {
                 .padding(.top, 4)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(.rect)
         .contextMenu {
